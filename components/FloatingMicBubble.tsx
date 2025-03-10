@@ -119,7 +119,7 @@ export function FloatingMicBubble(props: FloatingMicBubbleProps) {
             scale: 1.02,
             background: 'linear-gradient(to right, rgba(37, 99, 235, 0.2), rgba(59, 130, 246, 0.3))',
             boxShadow: '0 0 30px rgba(37, 99, 235, 0.4)',
-            transition: { duration: 0.1, ease: 'easeOut' }
+            transition: { duration: 0.05, ease: [0.16, 1, 0.3, 1] }
           }}
           whileTap={{ scale: 0.98, transition: { duration: 0.1 } }}
           onClick={props.onConnectButtonClicked}

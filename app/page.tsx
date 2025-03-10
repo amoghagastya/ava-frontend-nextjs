@@ -101,7 +101,7 @@ function ControlBar(props: {
   const krisp = useKrispNoiseFilter();
   useEffect(() => {
     krisp.setNoiseFilterEnabled(true);
-  }, []);
+  }, [krisp]);
 
   return (
     <div className="relative h-[120px] flex items-start justify-center">
