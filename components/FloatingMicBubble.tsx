@@ -1,6 +1,6 @@
 import { AgentState, useVoiceAssistant } from "@livekit/components-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MicrophoneIcon } from "./MicrophoneIcon";
 
 type FloatingMicBubbleProps = {
@@ -12,18 +12,66 @@ export function FloatingMicBubble(props: FloatingMicBubbleProps) {
   const { state, audioTrack } = useVoiceAssistant();
   const [isAnimating, setIsAnimating] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
+  const [showExtendedMessage, setShowExtendedMessage] = useState(false);
+  const timeoutRef = useRef<number | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number>();
   
   useEffect(() => {
     props.onStateChange(state);
     setIsAnimating(state === "connecting");
 
-    // Set up audio level monitoring for speech animation
+    if (state === "connecting") {
+      setShowExtendedMessage(false);
+      timeoutRef.current = window.setTimeout(() => {
+        setShowExtendedMessage(true);
+      }, 10000);
+    } else {
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+      }
+      setShowExtendedMessage(false);
+    }
+
+    // Set up audio analysis when speaking
     if (audioTrack && state === "speaking") {
-      const interval = setInterval(async () => {
-        const level = 0.5; // Default animation value for consistent visual feedback
-        setAudioLevel(level);
-      }, 50);
-      return () => clearInterval(interval);
+      const audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      
+      // Connect the audio track to the analyser
+      if (audioTrack?.publication?.track?.mediaStreamTrack) {
+        const source = audioContext.createMediaStreamSource(
+          new MediaStream([audioTrack.publication.track.mediaStreamTrack])
+        );
+        source.connect(analyser);
+        analyserRef.current = analyser;
+      }
+
+      // Function to update audio levels
+      const updateAudioLevel = () => {
+        if (analyserRef.current) {
+          analyserRef.current.getByteFrequencyData(dataArray);
+          
+          // Calculate average volume level
+          const average = dataArray.reduce((acc, value) => acc + value, 0) / bufferLength;
+          // Normalize to 0-1 range and smooth the values
+          const normalizedLevel = Math.min(average / 128, 1);
+          setAudioLevel(normalizedLevel);
+        }
+        animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
+      };
+
+      updateAudioLevel();
+
+      return () => {
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
+        audioContext.close();
+      };
     } else {
       setAudioLevel(0);
     }
@@ -37,16 +85,16 @@ export function FloatingMicBubble(props: FloatingMicBubbleProps) {
           <motion.div
             className="absolute inset-[-40px] rounded-full blur-2xl pointer-events-none"
             animate={{
-              opacity: [0.4, 0.6],
-              scale: [1 + audioLevel * 0.1, 1 + audioLevel * 0.2]
+              opacity: [0.4, 0.7],
+              scale: [1 + audioLevel * 0.2, 1 + audioLevel * 0.4]
             }}
             transition={{
               repeat: Infinity,
-              duration: 1,
-              ease: "easeInOut"
+              duration: 0.3,
+              ease: "linear"
             }}
             style={{
-              background: "radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0) 70%)"
+              background: "radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, rgba(59, 130, 246, 0) 70%)"
             }}
           />
         )}
@@ -140,7 +188,7 @@ export function FloatingMicBubble(props: FloatingMicBubbleProps) {
               ease: "easeInOut"
             }}
           >
-            <span className="text-blue-500/70 text-sm font-light tracking-wide">connecting...</span>
+            <span className="text-blue-500/70 text-sm font-light tracking-wide">{showExtendedMessage ? "give it a sec..." : "connecting..."}</span>
           </motion.div>
         )}
       </div>

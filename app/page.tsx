@@ -2,7 +2,6 @@
 
 import { CloseIcon } from "@/components/CloseIcon";
 import { FloatingMicBubble } from "@/components/FloatingMicBubble";
-import { NoAgentNotification } from "@/components/NoAgentNotification";
 import {
   AgentState,
   DisconnectButton,
@@ -74,7 +73,6 @@ export default function Page() {
             agentState={agentState}
           />
           <RoomAudioRenderer />
-          <NoAgentNotification state={agentState} />
         </LiveKitRoom>
       </ConnectionContext.Provider>
     </main>
