@@ -48,7 +48,7 @@ export default function Page() {
   return (
     <main
       data-lk-theme="default"
-      className="h-full grid content-center bg-[var(--lk-bg)]"
+      className="h-full grid content-center"
     >
       <ConnectionContext.Provider value={{ onConnectButtonClicked }}>
         <LiveKitRoom
@@ -61,7 +61,12 @@ export default function Page() {
           onDisconnected={() => {
             updateConnectionDetails(undefined);
           }}
-          className="grid grid-rows-[1fr_auto] gap-8 items-center"
+          className="grid grid-rows-[1fr_auto] gap-8 items-center bg-transparent"
+          style={{ 
+            background: 'transparent',
+            '--lk-background-color': 'transparent',
+            '--lk-component-background-color': 'transparent'
+          } as React.CSSProperties}
         >
           <SimpleVoiceAssistant onStateChange={setAgentState} />
           <ControlBar
@@ -112,8 +117,13 @@ function ControlBar(props: {
               transition={{ duration: 0.4, ease: [0.09, 1.04, 0.245, 1.055] }}
               className="flex h-10 justify-center items-center gap-4"
             >
-              <VoiceAssistantControlBar controls={{ leave: false }} />
-              <DisconnectButton>
+              <div className="opacity-60 hover:opacity-100 transition-opacity">
+                <VoiceAssistantControlBar controls={{ leave: false }} />
+              </div> 
+
+              <DisconnectButton 
+                className="opacity-60 hover:opacity-100 hover:text-rose-300 transition-opacity"
+              >
                 <CloseIcon />
               </DisconnectButton>
             </motion.div>
