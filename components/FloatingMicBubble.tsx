@@ -79,7 +79,7 @@ export function FloatingMicBubble(props: FloatingMicBubbleProps) {
 
   return (
     <div className="h-[200px] max-w-[90vw] mx-auto flex items-center justify-center">
-      <div className="relative animate-float">
+      <div className="relative animate-float pt-10"> {/* Changed p-10 to pt-10 */}
         {/* Speech reactive glow effect - only visible during speaking */}
         {state === "speaking" && (
           <motion.div
